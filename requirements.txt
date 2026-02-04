@@ -1,0 +1,49 @@
+# Core Telegram Framework
+pyrogram==2.0.106
+tgcrypto==1.2.5
+
+# Database
+motor==3.3.2
+pymongo==4.6.1
+
+# Environment & Config
+python-dotenv==1.0.0
+
+# HTTP & API Requests
+aiohttp==3.9.1
+requests==2.31.0
+
+# Media & Download
+yt-dlp==2023.12.30
+pillow==10.1.0
+
+# Utilities
+python-telegram-bot==20.7
+
+# Translation
+googletrans==4.0.0rc1
+deep-translator==1.11.4
+
+# Logging
+loguru==0.7.2
+colorlog==6.8.0
+
+# Async & Performance
+asyncio==3.4.3
+aiofiles==23.2.1
+
+# Scheduling
+apscheduler==3.10.4
+
+# Math & Calculations
+sympy==1.12
+
+# Weather API
+python-weather==1.0.3
+pyowm==3.3.0
+
+# Other Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+humanize==4.9.0
+psutil==5.9.6
