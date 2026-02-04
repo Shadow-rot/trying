@@ -14,25 +14,25 @@ class Config:
     """Bot Configuration Class"""
     
     # Telegram API Configuration
-    API_ID: int = int(os.getenv("API_ID", "0"))
-    API_HASH: str = os.getenv("API_HASH", "")
-    BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
+    API_ID: int = int(os.getenv("API_ID", "23664800"))
+    API_HASH: str = os.getenv("API_HASH", "1effa1d4d80a7b994dca61b1159834c9")
+    BOT_TOKEN: str = os.getenv("BOT_TOKEN", "8398153168:AAFi9U6-4lohmD01uulIL1HxX2YJGNc69-4")
     
     # Bot Owner Configuration
-    OWNER_ID: int = int(os.getenv("OWNER_ID", "0"))
+    OWNER_ID: int = int(os.getenv("OWNER_ID", "5147822244"))
     SUDO_USERS: List[int] = [
-        int(x) for x in os.getenv("SUDO_USERS", "").split(",") if x.strip()
+        int(x) for x in os.getenv("SUDO_USERS", "5147822244").split(",") if x.strip()
     ]
     
     # Command Configuration
     COMMAND_PREFIX: str = os.getenv("COMMAND_PREFIX", ".")
     
     # Database Configuration
-    MONGO_URL: str = os.getenv("MONGO_URL", "")
+    MONGO_URL: str = os.getenv("MONGO_URL", "mongodb+srv://userbot:userbot@cluster0.iweqz.mongodb.net/test?retryWrites=true&w=majority")
     DATABASE_NAME: str = os.getenv("DATABASE_NAME", "telegram_bot")
     
     # Logging Configuration
-    LOG_CHANNEL: int = int(os.getenv("LOG_CHANNEL", "0"))
+    LOG_CHANNEL: int = int(os.getenv("LOG_CHANNEL", "-1002059929123"))
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
     # Features Toggle
@@ -49,7 +49,7 @@ class Config:
     FLOOD_WAIT_THRESHOLD: int = int(os.getenv("FLOOD_WAIT_THRESHOLD", "10"))
     
     # Bot Information
-    BOT_NAME: str = "Advanced Telegram Bot"
+    BOT_NAME: str = "cku"
     BOT_VERSION: str = "2.0.0"
     
     @classmethod
