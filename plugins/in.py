@@ -71,3 +71,4 @@ async def show_inline_buttons(client: Client, message: Message):
             reply_markup=keyboard,
             random_id=client.rnd_id()
         )
+           ) 
