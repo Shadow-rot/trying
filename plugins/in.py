@@ -1,15 +1,16 @@
 """
-Inline Buttons Demo - COLORED BUTTONS (Layer 224)
-Shows actual colored inline buttons using new MTProto schema
+Inline Buttons Demo - COLORED BUTTONS
+Requires: pip install git+https://github.com/pyrogram/pyrogram.git
 """
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pyrogram.raw.types import (
     ReplyInlineMarkup,
+    KeyboardButtonRow,
     KeyboardButtonUrl,
-    KeyboardButtonCallback,
     KeyboardButtonStyle
 )
+from pyrogram.raw import functions
 from config import config
 from utils.decorators import log_errors
 
@@ -17,50 +18,56 @@ from utils.decorators import log_errors
 @Client.on_message(filters.command("inline", prefixes=config.COMMAND_PREFIX))
 @log_errors
 async def show_inline_buttons(client: Client, message: Message):
-    """Display colored inline buttons (Layer 224)"""
+    """Display colored inline buttons"""
     
-    # Create button styles
-    style_primary = KeyboardButtonStyle(bg_primary=True)
-    style_success = KeyboardButtonStyle(bg_success=True)
-    style_danger = KeyboardButtonStyle(bg_danger=True)
-    
-    # Create keyboard with colored buttons
     keyboard = ReplyInlineMarkup(
         rows=[
-            [
-                KeyboardButtonCallback(
-                    text="OwO",
-                    data=b"primary",
-                    style=style_primary
-                )
-            ],
-            [
-                KeyboardButtonCallback(
-                    text="UwU",
-                    data=b"danger",
-                    style=style_danger
-                )
-            ],
-            [
-                KeyboardButtonCallback(
-                    text="💚 Success",
-                    data=b"success",
-                    style=style_success
-                )
-            ]
+            KeyboardButtonRow(
+                buttons=[
+                    KeyboardButtonUrl(
+                        text="OwO",
+                        url="https://t.me/I_shadwoo",
+                        flags=1024,  # Enable style flag
+                        style=KeyboardButtonStyle(
+                            flags=1,
+                            bg_primary=True
+                        )
+                    )
+                ]
+            ),
+            KeyboardButtonRow(
+                buttons=[
+                    KeyboardButtonUrl(
+                        text="UwU",
+                        url="https://t.me/I_shadwoo",
+                        flags=1024,
+                        style=KeyboardButtonStyle(
+                            flags=2,
+                            bg_danger=True
+                        )
+                    )
+                ]
+            ),
+            KeyboardButtonRow(
+                buttons=[
+                    KeyboardButtonUrl(
+                        text="💚 Success",
+                        url="https://t.me/I_shadwoo",
+                        flags=1024,
+                        style=KeyboardButtonStyle(
+                            flags=4,
+                            bg_success=True
+                        )
+                    )
+                ]
+            )
         ]
     )
     
-    await message.reply(
-        "This is a Inline keyboard",
-        reply_markup=keyboard
-    )
-
-
-
-@Client.on_callback_query(filters.regex(r"^(primary|danger|success)$"))
-@log_errors
-async def handle_inline_callback(client: Client, callback_query):
-    """Handle button clicks"""
-    button_type = callback_query.data.decode()
-    await callback_query.answer(f"You clicked: {button_type} button!", show_alert=True)
+    await client.invoke(
+        functions.messages.SendMessage(
+            peer=await client.resolve_peer(message.chat.id),
+            message="This is a Inline keyboard",
+            reply_markup=keyboard,
+            random_id=client.rnd_id()
+        )
