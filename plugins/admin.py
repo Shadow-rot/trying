@@ -30,10 +30,20 @@ async def get_user_from_message(client: Client, message: Message):
         return None
 
     try:
-        user = await client.get_users(args)
+        # Try to parse as user ID (numbers only)
+        if args.strip().isdigit():
+            user = await client.get_users(int(args.strip()))
+            return user
+        
+        # Try username (with or without @)
+        username = args.strip().lstrip('@')
+        user = await client.get_users(username)
         return user
     except Exception as e:
-        await message.reply_text(f"❌ Could not find user: {e}")
+        await message.reply_text(
+            f"❌ Could not find user\n"
+            f"💡 **Tip:** Reply to the user's message instead of using username"
+        )
         return None
 
 
@@ -328,24 +338,44 @@ async def promote_user(client: Client, message: Message):
     title = title[:16]  # Telegram limit
 
     try:
-        await client.promote_chat_member(
-            message.chat.id,
-            user.id,
-            privileges=ChatPrivileges(
+        # Get chat type to determine available privileges
+        chat = await client.get_chat(message.chat.id)
+        is_channel = chat.type == "channel"
+        
+        # Set privileges based on chat type
+        if is_channel:
+            privileges = ChatPrivileges(
                 can_manage_chat=True,
+                can_post_messages=True,
+                can_edit_messages=True,
                 can_delete_messages=True,
-                can_manage_video_chats=True,
+                can_manage_video_chats=False,  # Not available in channels
                 can_restrict_members=True,
                 can_promote_members=False,
                 can_change_info=True,
                 can_invite_users=True,
-                can_pin_messages=True,
-                can_post_messages=True,
-                can_edit_messages=True
+                can_pin_messages=True
             )
+        else:
+            # For groups and supergroups
+            privileges = ChatPrivileges(
+                can_manage_chat=True,
+                can_delete_messages=True,
+                can_manage_video_chats=True,
+                can_restrict_members=True,
+                can_promote_members=False,  # Don't give promote rights by default
+                can_change_info=True,
+                can_invite_users=True,
+                can_pin_messages=True
+            )
+        
+        await client.promote_chat_member(
+            message.chat.id,
+            user.id,
+            privileges=privileges
         )
         
-        # Set custom title
+        # Set custom title (this might fail silently in some cases)
         try:
             await client.set_administrator_title(message.chat.id, user.id, title)
         except:
@@ -360,9 +390,114 @@ async def promote_user(client: Client, message: Message):
             f"👮 By: {message.from_user.mention}"
         )
     except ChatAdminRequired:
-        await message.reply_text("❌ I need admin rights to promote users")
+        await message.reply_text(
+            "❌ I need admin rights to promote users\n"
+            "💡 Make sure I have 'Add Admins' permission"
+        )
+    except UserAdminInvalid:
+        await message.reply_text("❌ This user is already an admin")
     except RPCError as e:
-        await message.reply_text(f"❌ Error: {e}")
+        error_msg = str(e)
+        if "RIGHT_FORBIDDEN" in error_msg or "403" in error_msg:
+            await message.reply_text(
+                "❌ **Cannot promote user**\n\n"
+                "**Possible reasons:**\n"
+                "• Bot doesn't have 'Add Admins' permission\n"
+                "• Bot cannot give rights it doesn't have\n"
+                "• User may already be admin with higher rights\n\n"
+                "💡 **Solution:** Give bot 'Add Admins' permission in chat settings"
+            )
+        else:
+            await message.reply_text(f"❌ Error: {e}")
+
+
+@Client.on_message(filters.command("fullpromote", prefixes=config.COMMAND_PREFIX))
+@group_only
+@admin_only
+@log_errors
+async def full_promote_user(client: Client, message: Message):
+    """Promote a user to admin with all rights (including add admins)"""
+    user = await get_user_from_message(client, message)
+    if not user:
+        return
+
+    # Get custom title if provided
+    args = extract_args(message)
+    title = " ".join(args.split()[1:]) if args and len(args.split()) > 1 else "Admin"
+    title = title[:16]  # Telegram limit
+
+    try:
+        # Get chat type to determine available privileges
+        chat = await client.get_chat(message.chat.id)
+        is_channel = chat.type == "channel"
+        
+        # Set full privileges based on chat type
+        if is_channel:
+            privileges = ChatPrivileges(
+                can_manage_chat=True,
+                can_post_messages=True,
+                can_edit_messages=True,
+                can_delete_messages=True,
+                can_manage_video_chats=False,
+                can_restrict_members=True,
+                can_promote_members=True,  # Full rights
+                can_change_info=True,
+                can_invite_users=True,
+                can_pin_messages=True
+            )
+        else:
+            # For groups and supergroups
+            privileges = ChatPrivileges(
+                can_manage_chat=True,
+                can_delete_messages=True,
+                can_manage_video_chats=True,
+                can_restrict_members=True,
+                can_promote_members=True,  # Full rights
+                can_change_info=True,
+                can_invite_users=True,
+                can_pin_messages=True
+            )
+        
+        await client.promote_chat_member(
+            message.chat.id,
+            user.id,
+            privileges=privileges
+        )
+        
+        # Set custom title
+        try:
+            await client.set_administrator_title(message.chat.id, user.id, title)
+        except:
+            pass
+
+        await message.reply_text(
+            f"⬆️ **User Fully Promoted**\n"
+            f"👤 User: {user.mention}\n"
+            f"🆔 ID: `{user.id}`\n"
+            f"🏷️ Title: {title}\n"
+            f"✅ Now has **full** admin privileges (including add admins)\n"
+            f"👮 By: {message.from_user.mention}"
+        )
+    except ChatAdminRequired:
+        await message.reply_text(
+            "❌ I need admin rights to promote users\n"
+            "💡 Make sure I have 'Add Admins' permission"
+        )
+    except UserAdminInvalid:
+        await message.reply_text("❌ This user is already an admin")
+    except RPCError as e:
+        error_msg = str(e)
+        if "RIGHT_FORBIDDEN" in error_msg or "403" in error_msg:
+            await message.reply_text(
+                "❌ **Cannot promote user**\n\n"
+                "**Possible reasons:**\n"
+                "• Bot doesn't have 'Add Admins' permission\n"
+                "• Bot cannot give rights it doesn't have\n"
+                "• User may already be admin with higher rights\n\n"
+                "💡 **Solution:** Give bot 'Add Admins' permission in chat settings"
+            )
+        else:
+            await message.reply_text(f"❌ Error: {e}")
 
 
 @Client.on_message(filters.command("demote", prefixes=config.COMMAND_PREFIX))
@@ -822,49 +957,55 @@ async def admin_help(client: Client, message: Message):
 🛡️ **Admin Commands Help**
 
 **Ban & Kick:**
-• `.ban` - Ban a user
-• `.unban` - Unban a user
-• `.tban <time>` - Temp ban (e.g., 5m, 2h, 1d)
-• `.kick` - Kick a user
+• `/ban` - Ban a user
+• `/unban` - Unban a user
+• `/tban <time>` - Temp ban (e.g., 5m, 2h, 1d)
+• `/kick` - Kick a user
 
 **Mute:**
-• `.mute` - Mute a user
-• `.unmute` - Unmute a user
-• `.tmute <time>` - Temp mute
+• `/mute` - Mute a user
+• `/unmute` - Unmute a user
+• `/tmute <time>` - Temp mute
 
 **Warnings:**
-• `.warn` - Warn a user (3 = ban)
-• `.warnings` - Check warnings
-• `.resetwarns` - Reset warnings
+• `/warn` - Warn a user (3 = ban)
+• `/warnings` - Check warnings
+• `/resetwarns` - Reset warnings
 
 **Promote:**
-• `.promote [title]` - Promote to admin
-• `.demote` - Demote admin
+• `/promote [title]` - Promote to admin (basic rights)
+• `/fullpromote [title]` - Promote with all rights
+• `/demote` - Demote admin
 
 **Pin:**
-• `.pin [silent]` - Pin message
-• `.unpin` - Unpin message
-• `.unpinall` - Unpin all
+• `/pin [silent]` - Pin message
+• `/unpin` - Unpin message
+• `/unpinall` - Unpin all
 
 **Delete:**
-• `.del` - Delete replied message
-• `.purge` - Delete messages in range
+• `/del` - Delete replied message
+• `/purge` - Delete messages in range
 
 **Lock:**
-• `.lock` - Lock chat (admins only)
-• `.unlock` - Unlock chat
+• `/lock` - Lock chat (admins only)
+• `/unlock` - Unlock chat
 
 **Info:**
-• `.admins` - List all admins
-• `.info` - User information
-• `.chatinfo` - Chat information
-• `.report` - Report to admins
+• `/admins` - List all admins
+• `/info` - User information
+• `/chatinfo` - Chat information
+• `/report` - Report to admins
 
 **Usage Examples:**
-• `.ban @user spam` - Ban with reason
-• `.tban @user 1d` - Ban for 1 day
-• `.warn @user rude` - Warn with reason
-• `.promote @user Moderator` - Promote with title
+• `/ban @user spam` - Ban with reason
+• `/tban @user 1d` - Ban for 1 day
+• `/warn @user rude` - Warn with reason
+• `/promote @user Moderator` - Promote with title
+
+**Important Notes:**
+• Reply to user's message if they have no username
+• Bot needs 'Add Admins' permission to promote
+• `/fullpromote` gives all rights including add admins
 
 **Time Format:**
 • `s` - seconds
