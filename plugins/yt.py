@@ -39,6 +39,7 @@ async def yt_audio(client, msg):
     status = await msg.reply("⏳ Downloading...")
 
     path = download_audio(url)
+    print("FILE PATH:", path)
 
     print("🎵 FILE:", path)
 
