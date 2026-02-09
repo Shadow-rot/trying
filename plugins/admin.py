@@ -738,7 +738,9 @@ async def purge_messages(client: Client, message: Message):
                 deleted_count += len(chunk)
                 await asyncio.sleep(1)  # Avoid flood limits
             except FloodWait as e:
-                await asyncio.sleep(e.value)
+                # FloodWait.x contains the wait time in Pyrogram 2.x
+                wait_time = e.x if hasattr(e, 'x') else (e.value if hasattr(e, 'value') else 30)
+                await asyncio.sleep(wait_time)
                 await client.delete_messages(message.chat.id, chunk)
                 deleted_count += len(chunk)
 
