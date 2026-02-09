@@ -2,11 +2,12 @@ import os
 import requests
 from pyrogram import Client, filters
 
-# Downloader API
+# CHANGE THIS TO YOUR REAL IP
 API = "http://10.55.16.235:5000"
 
 
-def download(url):
+def download_audio(url):
+
     try:
         r = requests.post(
             f"{API}/download",
@@ -19,8 +20,10 @@ def download(url):
         if data.get("status") == "ok":
             return data["file"]
 
+        print("API Error:", data)
+
     except Exception as e:
-        print("API error:", e)
+        print("Request Error:", e)
 
     return None
 
@@ -29,24 +32,27 @@ def download(url):
 async def yt_audio(client, msg):
 
     if len(msg.command) < 2:
-        return await msg.reply("Use: /yta <url>")
+        return await msg.reply("❌ Use: /yta <youtube link>")
 
     url = msg.command[1]
 
-    m = await msg.reply("⏳ Downloading...")
+    status = await msg.reply("⏳ Downloading...")
 
-    path = download(url)
+    path = download_audio(url)
+
+    print("🎵 FILE:", path)
 
     if not path or not os.path.exists(path):
-        return await m.edit("❌ Download failed")
+        return await status.edit("❌ Download failed")
 
-    await m.edit("⏫ Uploading...")
+    await status.edit("⏫ Uploading...")
 
     await msg.reply_audio(path)
 
+    # Clean up
     try:
         os.remove(path)
     except:
         pass
 
-    await m.delete()
+    await status.delete()
