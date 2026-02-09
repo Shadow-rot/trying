@@ -525,8 +525,7 @@ async def demote_user(client: Client, message: Message):
                 can_invite_users=False,
                 can_pin_messages=False,
                 can_post_messages=False,
-                can_edit_messages=False,
-                can_manage_topics=False
+                can_edit_messages=False
             )
         )
         await message.reply_text(
