@@ -11,7 +11,6 @@ AVAILABLE_PLUGINS = [
     'basic',      # Ping, alive, stats, info
     'admin',      # Ban, mute, kick, promote, demote
     'utilities',  # Calc, weather, translate
-    'downloader', # Download, yt, ytaudio
     'owner',      # Restart, broadcast, shell, logs
 ]
 
