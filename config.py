@@ -28,7 +28,7 @@ class Config:
     COMMAND_PREFIX: str = os.getenv("COMMAND_PREFIX", ".")
     
     # Database Configuration
-    MONGO_URL: str = os.getenv("MONGO_URL", "mongodb+srv://userbot:userbot@cluster0.iweqz.mongodb.net/test?retryWrites=true&w=majority")
+    MONGO_URL: str = os.getenv("MONGO_URL", "mongodb+srv://kafka:Kafkabot@hutao.5npk1wv.mongodb.net/?retryWrites=true&w=majority&appName=HuTao")
     DATABASE_NAME: str = os.getenv("DATABASE_NAME", "telegram_bot")
     
     # Logging Configuration
