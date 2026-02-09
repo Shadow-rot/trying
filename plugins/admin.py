@@ -511,20 +511,36 @@ async def demote_user(client: Client, message: Message):
         return
 
     try:
+        # Properly demote by explicitly setting all privileges to False
         await client.promote_chat_member(
             message.chat.id,
             user.id,
-            privileges=ChatPrivileges()
+            privileges=ChatPrivileges(
+                can_manage_chat=False,
+                can_delete_messages=False,
+                can_manage_video_chats=False,
+                can_restrict_members=False,
+                can_promote_members=False,
+                can_change_info=False,
+                can_invite_users=False,
+                can_pin_messages=False,
+                can_post_messages=False,
+                can_edit_messages=False,
+                can_manage_topics=False
+            )
         )
         await message.reply_text(
             f"⬇️ **User Demoted**\n"
             f"👤 User: {user.mention}\n"
             f"🆔 ID: `{user.id}`\n"
             f"❌ Admin privileges removed\n"
+            f"✅ User is now a regular member\n"
             f"👮 By: {message.from_user.mention}"
         )
     except ChatAdminRequired:
         await message.reply_text("❌ I need admin rights to demote users")
+    except UserAdminInvalid:
+        await message.reply_text("❌ Cannot demote the group creator")
     except RPCError as e:
         await message.reply_text(f"❌ Error: {e}")
 
