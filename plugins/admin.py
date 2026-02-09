@@ -12,11 +12,36 @@ import asyncio
 from typing import Optional, Dict
 from config import config
 from utils.decorators import log_errors, admin_only, group_only
-from utils.helpers import extract_args
+
+# Try to import extract_args, provide fallback if it fails
+try:
+    from utils.helpers import extract_args
+except:
+    def extract_args(message: Message) -> str:
+        """Fallback extract_args function"""
+        if not message.text:
+            return ""
+        parts = message.text.split(maxsplit=1)
+        return parts[1] if len(parts) > 1 else ""
 
 # In-memory storage for warnings (consider using database for production)
 user_warnings: Dict[int, Dict[int, int]] = {}  # {chat_id: {user_id: warning_count}}
 MAX_WARNINGS = 3
+
+
+def safe_extract_args(message: Message) -> str:
+    """Safely extract arguments from message"""
+    try:
+        args = safe_extract_args(message)
+        if args and isinstance(args, str):
+            return args
+        return ""
+    except Exception:
+        # Fallback: manual extraction
+        if not message.text:
+            return ""
+        parts = message.text.split(maxsplit=1)
+        return parts[1] if len(parts) > 1 else ""
 
 
 async def get_user_from_message(client: Client, message: Message):
@@ -24,7 +49,7 @@ async def get_user_from_message(client: Client, message: Message):
     if message.reply_to_message:
         return message.reply_to_message.from_user
 
-    args = extract_args(message)
+    args = safe_extract_args(message)
     if not args:
         await message.reply_text("❌ Reply to a user or provide username/ID")
         return None
@@ -85,7 +110,7 @@ async def ban_user(client: Client, message: Message):
         return
 
     # Get reason if provided
-    args = extract_args(message)
+    args = safe_extract_args(message)
     reason = " ".join(args.split()[1:]) if args and len(args.split()) > 1 else "No reason provided"
 
     try:
@@ -139,7 +164,7 @@ async def temp_ban_user(client: Client, message: Message):
     if not user:
         return
 
-    args = extract_args(message)
+    args = safe_extract_args(message)
     time_str = args.split()[1] if args and len(args.split()) > 1 else None
     
     if not time_str:
@@ -181,7 +206,7 @@ async def kick_user(client: Client, message: Message):
     if not user:
         return
 
-    args = extract_args(message)
+    args = safe_extract_args(message)
     reason = " ".join(args.split()[1:]) if args and len(args.split()) > 1 else "No reason provided"
 
     try:
@@ -214,7 +239,7 @@ async def mute_user(client: Client, message: Message):
     if not user:
         return
 
-    args = extract_args(message)
+    args = safe_extract_args(message)
     reason = " ".join(args.split()[1:]) if args and len(args.split()) > 1 else "No reason provided"
 
     try:
@@ -285,7 +310,7 @@ async def temp_mute_user(client: Client, message: Message):
     if not user:
         return
 
-    args = extract_args(message)
+    args = safe_extract_args(message)
     time_str = args.split()[1] if args and len(args.split()) > 1 else None
     
     if not time_str:
@@ -333,7 +358,7 @@ async def promote_user(client: Client, message: Message):
         return
 
     # Get custom title if provided
-    args = extract_args(message)
+    args = safe_extract_args(message)
     title = " ".join(args.split()[1:]) if args and len(args.split()) > 1 else "Admin"
     title = title[:16]  # Telegram limit
 
@@ -422,7 +447,7 @@ async def full_promote_user(client: Client, message: Message):
         return
 
     # Get custom title if provided
-    args = extract_args(message)
+    args = safe_extract_args(message)
     title = " ".join(args.split()[1:]) if args and len(args.split()) > 1 else "Admin"
     title = title[:16]  # Telegram limit
 
@@ -564,7 +589,7 @@ async def warn_user(client: Client, message: Message):
         user_warnings[chat_id] = {}
 
     # Get reason
-    args = extract_args(message)
+    args = safe_extract_args(message)
     reason = " ".join(args.split()[1:]) if args and len(args.split()) > 1 else "No reason provided"
 
     # Add warning
@@ -655,7 +680,7 @@ async def pin_message(client: Client, message: Message):
         return
 
     # Check if should notify
-    args = extract_args(message)
+    args = safe_extract_args(message)
     notify = "silent" not in args.lower() if args else True
 
     try:
@@ -949,7 +974,14 @@ async def report_user(client: Client, message: Message):
                 admins.append(member.user.mention)
 
         reported_user = message.reply_to_message.from_user
-        reason = extract_args(message) or "No reason provided"
+        
+        # Safely extract reason
+        try:
+            reason = safe_extract_args(message)
+            if not reason or not isinstance(reason, str):
+                reason = "No reason provided"
+        except:
+            reason = "No reason provided"
 
         admin_mentions = " ".join(admins[:5])  # Mention up to 5 admins
 
@@ -962,6 +994,8 @@ async def report_user(client: Client, message: Message):
         )
     except RPCError as e:
         await message.reply_text(f"❌ Error: {e}")
+    except Exception as e:
+        await message.reply_text(f"❌ An error occurred: {str(e)}")
 
 
 # ==================== HELP COMMAND ====================
