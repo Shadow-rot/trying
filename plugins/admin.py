@@ -822,49 +822,49 @@ async def admin_help(client: Client, message: Message):
 🛡️ **Admin Commands Help**
 
 **Ban & Kick:**
-• `/ban` - Ban a user
-• `/unban` - Unban a user
-• `/tban <time>` - Temp ban (e.g., 5m, 2h, 1d)
-• `/kick` - Kick a user
+• `.ban` - Ban a user
+• `.unban` - Unban a user
+• `.tban <time>` - Temp ban (e.g., 5m, 2h, 1d)
+• `.kick` - Kick a user
 
 **Mute:**
-• `/mute` - Mute a user
-• `/unmute` - Unmute a user
-• `/tmute <time>` - Temp mute
+• `.mute` - Mute a user
+• `.unmute` - Unmute a user
+• `.tmute <time>` - Temp mute
 
 **Warnings:**
-• `/warn` - Warn a user (3 = ban)
-• `/warnings` - Check warnings
-• `/resetwarns` - Reset warnings
+• `.warn` - Warn a user (3 = ban)
+• `.warnings` - Check warnings
+• `.resetwarns` - Reset warnings
 
 **Promote:**
-• `/promote [title]` - Promote to admin
-• `/demote` - Demote admin
+• `.promote [title]` - Promote to admin
+• `.demote` - Demote admin
 
 **Pin:**
-• `/pin [silent]` - Pin message
-• `/unpin` - Unpin message
-• `/unpinall` - Unpin all
+• `.pin [silent]` - Pin message
+• `.unpin` - Unpin message
+• `.unpinall` - Unpin all
 
 **Delete:**
-• `/del` - Delete replied message
-• `/purge` - Delete messages in range
+• `.del` - Delete replied message
+• `.purge` - Delete messages in range
 
 **Lock:**
-• `/lock` - Lock chat (admins only)
-• `/unlock` - Unlock chat
+• `.lock` - Lock chat (admins only)
+• `.unlock` - Unlock chat
 
 **Info:**
-• `/admins` - List all admins
-• `/info` - User information
-• `/chatinfo` - Chat information
-• `/report` - Report to admins
+• `.admins` - List all admins
+• `.info` - User information
+• `.chatinfo` - Chat information
+• `.report` - Report to admins
 
 **Usage Examples:**
-• `/ban @user spam` - Ban with reason
-• `/tban @user 1d` - Ban for 1 day
-• `/warn @user rude` - Warn with reason
-• `/promote @user Moderator` - Promote with title
+• `.ban @user spam` - Ban with reason
+• `.tban @user 1d` - Ban for 1 day
+• `.warn @user rude` - Warn with reason
+• `.promote @user Moderator` - Promote with title
 
 **Time Format:**
 • `s` - seconds
