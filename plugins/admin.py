@@ -12,6 +12,7 @@ import asyncio
 from typing import Optional, Dict
 from config import config
 from utils.decorators import log_errors, admin_only, group_only
+from core.logger import bot_logger
 
 # Try to import extract_args, provide fallback if it fails
 try:
@@ -959,31 +960,48 @@ async def chat_info(client: Client, message: Message):
 
 @Client.on_message(filters.command("report", prefixes=config.COMMAND_PREFIX))
 @group_only
-@log_errors
 async def report_user(client: Client, message: Message):
     """Report a message to admins"""
-    if not message.reply_to_message:
-        await message.reply_text("❌ Reply to a message to report it")
-        return
-
     try:
-        # Get all admins
-        admins = []
-        async for member in client.get_chat_members(message.chat.id, filter="administrators"):
-            if not member.user.is_bot:
-                admins.append(member.user.mention)
+        # Check if replying to a message
+        if not message.reply_to_message:
+            await message.reply_text("❌ Reply to a message to report it")
+            return
+        
+        # Check if reported message has a user
+        if not message.reply_to_message.from_user:
+            await message.reply_text("❌ Cannot report this message")
+            return
 
         reported_user = message.reply_to_message.from_user
         
-        # Safely extract reason
+        # Extract reason safely
+        reason = "No reason provided"
         try:
-            reason = safe_extract_args(message)
-            if not reason or not isinstance(reason, str):
-                reason = "No reason provided"
+            if message.text and len(message.text.split()) > 1:
+                reason = message.text.split(maxsplit=1)[1]
         except:
-            reason = "No reason provided"
+            pass
+        
+        # Get admins
+        admins = []
+        try:
+            async for member in client.get_chat_members(message.chat.id, filter="administrators"):
+                if member.user and not member.user.is_bot:
+                    try:
+                        admins.append(member.user.mention)
+                    except:
+                        pass
+        except Exception as e:
+            bot_logger.error(f"Error getting admins in report: {e}")
+            await message.reply_text("❌ Could not fetch admin list")
+            return
 
-        admin_mentions = " ".join(admins[:5])  # Mention up to 5 admins
+        if not admins:
+            await message.reply_text("❌ No admins found")
+            return
+
+        admin_mentions = " ".join(admins[:5])
 
         await message.reply_text(
             f"🚨 **Message Reported to Admins**\n\n"
@@ -992,10 +1010,12 @@ async def report_user(client: Client, message: Message):
             f"👮 Reported By: {message.from_user.mention}\n\n"
             f"{admin_mentions}"
         )
-    except RPCError as e:
-        await message.reply_text(f"❌ Error: {e}")
     except Exception as e:
-        await message.reply_text(f"❌ An error occurred: {str(e)}")
+        bot_logger.error(f"Error in report_user: {e}")
+        try:
+            await message.reply_text(f"❌ An error occurred: {str(e)}")
+        except:
+            pass
 
 
 # ==================== HELP COMMAND ====================
