@@ -3,7 +3,7 @@ import requests
 from pyrogram import Client, filters
 
 # CHANGE THIS TO YOUR REAL IP
-API = "http://10.55.16.235:5000"
+API = "http://127.0.0.1:5000"
 
 
 def download_audio(url):
