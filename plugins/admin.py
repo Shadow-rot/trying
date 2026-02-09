@@ -863,10 +863,20 @@ async def list_admins(client: Client, message: Message):
     """List all admins in the group"""
     try:
         admins = []
-        async for member in client.get_chat_members(message.chat.id, filter="administrators"):
-            status = "👑 Owner" if member.status == "creator" else "👮 Admin"
-            custom_title = f" ({member.custom_title})" if member.custom_title else ""
-            admins.append(f"{status} {member.user.mention}{custom_title}")
+        
+        # Try using ChatMembersFilter enum first
+        try:
+            from pyrogram.enums import ChatMembersFilter
+            async for member in client.get_chat_members(message.chat.id, filter=ChatMembersFilter.ADMINISTRATORS):
+                status = "👑 Owner" if member.status == "creator" else "👮 Admin"
+                custom_title = f" ({member.custom_title})" if member.custom_title else ""
+                admins.append(f"{status} {member.user.mention}{custom_title}")
+        except ImportError:
+            # Fallback for older Pyrogram versions
+            async for member in client.get_chat_members(message.chat.id, filter="administrators"):
+                status = "👑 Owner" if member.status == "creator" else "👮 Admin"
+                custom_title = f" ({member.custom_title})" if member.custom_title else ""
+                admins.append(f"{status} {member.user.mention}{custom_title}")
 
         admin_list = "\n".join(admins)
         await message.reply_text(
@@ -983,22 +993,33 @@ async def report_user(client: Client, message: Message):
         except:
             pass
         
-        # Get admins
+        # Get admins - try different filter methods
         admins = []
         try:
-            async for member in client.get_chat_members(message.chat.id, filter="administrators"):
+            # Try using ChatMembersFilter enum
+            from pyrogram.enums import ChatMembersFilter
+            async for member in client.get_chat_members(message.chat.id, filter=ChatMembersFilter.ADMINISTRATORS):
                 if member.user and not member.user.is_bot:
                     try:
                         admins.append(member.user.mention)
                     except:
                         pass
+        except ImportError:
+            # Fallback to string filter for older versions
+            try:
+                async for member in client.get_chat_members(message.chat.id, filter="administrators"):
+                    if member.user and not member.user.is_bot:
+                        try:
+                            admins.append(member.user.mention)
+                        except:
+                            pass
+            except Exception as e:
+                bot_logger.error(f"Error getting admins with string filter: {e}")
         except Exception as e:
             bot_logger.error(f"Error getting admins in report: {e}")
-            await message.reply_text("❌ Could not fetch admin list")
-            return
 
         if not admins:
-            await message.reply_text("❌ No admins found")
+            await message.reply_text("❌ No admins found to notify")
             return
 
         admin_mentions = " ".join(admins[:5])
@@ -1013,7 +1034,7 @@ async def report_user(client: Client, message: Message):
     except Exception as e:
         bot_logger.error(f"Error in report_user: {e}")
         try:
-            await message.reply_text(f"❌ An error occurred: {str(e)}")
+            await message.reply_text(f"❌ An error occurred while reporting")
         except:
             pass
 
